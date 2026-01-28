@@ -34,6 +34,8 @@ dependency-reduced-pom.xml
 *.tfstate.*
 *.tfvars
 *.tfvars.json
+tfplan
+*.tfplan
 crash.log
 crash.*.log
 override.tf
@@ -63,7 +65,8 @@ terraform.rc
 # ===================
 # Claude Code
 # ===================
-.claude/settings.local.json
+.claude/
+**/.claude/
 
 # ===================
 # OS Files
@@ -77,6 +80,7 @@ Thumbs.db
 *.log
 build-output.txt
 test-output.txt
+response.json
 
 # ===================
 # Archives

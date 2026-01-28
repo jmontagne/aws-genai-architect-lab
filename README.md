@@ -22,7 +22,7 @@ This repository is NOT a monolithic application. It is a **Laboratory** designed
 
 | ID | Domain | Experiment Name & Goal | Primary Stack | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **POC-01** | *Fundamentals* | **Bedrock Basics**: Raw SDK connectivity & Inference Parameters (Temp, Top-P). | Java SDK v2 | 🔄 Active |
+| **POC-01** | *Fundamentals* | **Bedrock Inference & Observability**: Lambda deployment, streaming, Powertools logging. | Java 21 / Lambda / Terraform | ✅ Complete |
 | **POC-02** | *Architecture* | **The RAG Pipeline**: Advanced chunking & Knowledge Bases for Amazon Bedrock. | LangChain4j | ⏳ Planned |
 | **POC-03** | *Agents* | **Agentic Tools**: Autonomous agents querying SQL databases safely. | Java / Tools | ⏳ Planned |
 | **POC-04** | *Security* | **Security Guardrails**: PII filtering & GDPR compliance patterns. | Python / Boto3 | ⏳ Planned |

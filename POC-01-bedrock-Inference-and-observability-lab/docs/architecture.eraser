@@ -1,0 +1,86 @@
+// POC-01: Bedrock Inference & Observability Lab
+// Architecture Diagram for app.eraser.io
+// Copy and paste this content into https://app.eraser.io/
+
+cloud-architecture-diagram
+
+// ============================================
+// TITLE
+// ============================================
+title POC-01: Bedrock Inference & Observability Lab
+
+// ============================================
+// GROUPS
+// ============================================
+
+AWS Cloud [icon: aws] {
+  Amazon Bedrock [icon: aws-bedrock, color: orange] {
+    Claude 3.5 Sonnet [icon: aws-bedrock, label: "Claude 3.5 Sonnet\n(High Quality)"]
+    Claude 3 Haiku [icon: aws-bedrock, label: "Claude 3 Haiku\n(Fast & Cheap)"]
+    Converse Stream API [icon: aws-api-gateway, label: "Converse Stream API\n(Unified Interface)"]
+  }
+
+  Observability [icon: aws-cloudwatch, color: green] {
+    CloudWatch Logs [icon: aws-cloudwatch, label: "CloudWatch Logs\n30-day retention\nReal-time access"]
+    S3 Bucket [icon: aws-s3, label: "S3 Bucket\nEncrypted (KMS)\nVersioned\nLifecycle: 90 days"]
+    KMS Key [icon: aws-kms, label: "KMS Key\nAuto-rotation\nEncrypts all data"]
+  }
+
+  Security [icon: aws-iam, color: red] {
+    IAM Role [icon: aws-iam, label: "IAM Role\nBedrock → S3/CW\nLeast Privilege"]
+  }
+}
+
+Spring Boot Application [icon: spring, color: green] {
+  Controller Layer [icon: server, label: "InferenceController\nWebFlux Endpoints\nSSE Streaming"]
+  Service Layer [icon: gears, label: "InferenceService\nJacques Montagne Persona\nModel Comparison"]
+  Streaming Client [icon: code, label: "BedrockStreamingClient\nReactor Flux<String>\nTTFT Tracking"]
+  Async Client [icon: aws, label: "BedrockRuntimeAsyncClient\nExponential Backoff\nAdaptive Retry"]
+}
+
+Infrastructure as Code [icon: terraform, color: purple] {
+  Terraform [icon: terraform, label: "Terraform\nModular Design\nReproducible"]
+}
+
+Client [icon: user, label: "Client\ncurl / Browser\nSSE Consumer"]
+
+// ============================================
+// CONNECTIONS
+// ============================================
+
+// Client to Application
+Client > Controller Layer: HTTP Request\nGET /api/v1/inference/stream/{model}
+
+// Application Internal Flow
+Controller Layer > Service Layer: streamWithJacquesMontagne()
+Service Layer > Streaming Client: streamConverse()
+Streaming Client > Async Client: ConverseStreamRequest
+
+// Application to Bedrock
+Async Client > Converse Stream API: HTTPS\nAWS SDK v2
+
+// Bedrock Internal
+Converse Stream API > Claude 3.5 Sonnet: Route by modelId
+Converse Stream API > Claude 3 Haiku: Route by modelId
+
+// Streaming Response (reverse)
+Claude 3.5 Sonnet -- Converse Stream API: Token Stream
+Claude 3 Haiku -- Converse Stream API: Token Stream
+Converse Stream API -- Async Client: ContentBlockDeltaEvent
+Async Client -- Streaming Client: Callback → Sink
+Streaming Client -- Controller Layer: Flux<String>
+Controller Layer -- Client: Server-Sent Events\ndata: token1\ndata: token2
+
+// Logging Flow
+Converse Stream API > CloudWatch Logs: Real-time Logs
+Converse Stream API > S3 Bucket: Persistent Logs
+CloudWatch Logs > KMS Key: Encrypted
+S3 Bucket > KMS Key: Encrypted
+IAM Role > CloudWatch Logs: Write Permission
+IAM Role > S3 Bucket: Write Permission
+
+// Terraform
+Terraform > CloudWatch Logs: Creates
+Terraform > S3 Bucket: Creates
+Terraform > KMS Key: Creates
+Terraform > IAM Role: Creates

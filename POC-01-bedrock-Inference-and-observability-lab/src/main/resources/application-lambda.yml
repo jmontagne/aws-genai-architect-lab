@@ -1,0 +1,35 @@
+# Spring Boot configuration for AWS Lambda deployment
+# Activated via SPRING_PROFILES_ACTIVE=lambda in Lambda environment
+
+spring:
+  main:
+    # Disable banner for cleaner Lambda logs
+    banner-mode: off
+    # Lazy initialization reduces startup time
+    lazy-initialization: true
+    # Force servlet mode for Lambda (WebFlux not supported by serverless-java-container)
+    web-application-type: servlet
+
+  # Disable DevTools in Lambda
+  devtools:
+    restart:
+      enabled: false
+
+  # Disable web server since Lambda handles HTTP
+  web:
+    resources:
+      add-mappings: false
+
+# Logging configuration for Lambda (Powertools handles structured logging)
+logging:
+  level:
+    root: INFO
+    com.jmontagne.bedrock: INFO
+    # Reduce AWS SDK noise
+    software.amazon.awssdk: WARN
+    org.springframework: WARN
+
+# Server configuration (used by Serverless Java Container)
+server:
+  servlet:
+    context-path: /

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.1</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.jmontagne</groupId>
+    <artifactId>bedrock-inference-lab</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Bedrock Inference and Observability Lab</name>
+    <description>POC-01: Amazon Bedrock Inference with Enterprise-Grade Observability</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <aws.sdk.version>2.29.0</aws.sdk.version>
+        <langchain4j.version>1.0.0-beta1</langchain4j.version>
+        <reactor.version>3.6.11</reactor.version>
+        <aws.lambda.java.version>1.2.3</aws.lambda.java.version>
+        <aws.serverless.container.version>2.0.3</aws.serverless.container.version>
+        <powertools.version>1.18.0</powertools.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws.sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- Spring Boot Web for Lambda compatibility (servlet-based) -->
+        <!-- Note: WebFlux removed for Lambda compatibility - use reactor-core directly -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Actuator for health and metrics -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- AWS SDK v2 - Bedrock Runtime -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>bedrockruntime</artifactId>
+        </dependency>
+
+        <!-- AWS SDK v2 - Netty NIO Client for async operations -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>netty-nio-client</artifactId>
+        </dependency>
+
+        <!-- LangChain4j Bedrock integration -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-bedrock</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+
+        <!-- LangChain4j Core -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+
+        <!-- Project Reactor -->
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>${reactor.version}</version>
+        </dependency>
+
+        <!-- Jackson for JSON processing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!-- AWS Lambda Runtime -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-core</artifactId>
+            <version>${aws.lambda.java.version}</version>
+        </dependency>
+
+        <!-- AWS Serverless Java Container for Spring Boot 3 -->
+        <dependency>
+            <groupId>com.amazonaws.serverless</groupId>
+            <artifactId>aws-serverless-java-container-springboot3</artifactId>
+            <version>${aws.serverless.container.version}</version>
+        </dependency>
+
+        <!-- AWS Lambda Powertools - Logging -->
+        <dependency>
+            <groupId>software.amazon.lambda</groupId>
+            <artifactId>powertools-logging</artifactId>
+            <version>${powertools.version}</version>
+        </dependency>
+
+        <!-- AWS Lambda Powertools - Tracing -->
+        <dependency>
+            <groupId>software.amazon.lambda</groupId>
+            <artifactId>powertools-tracing</artifactId>
+            <version>${powertools.version}</version>
+            <exclusions>
+                <!-- Exclude X-Ray SDK v2 instrumentor due to Jackson version conflict with Spring Boot 3.4 -->
+                <!-- The instrumentor uses CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES which was removed in newer Jackson -->
+                <exclusion>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- AWS Lambda Powertools - Metrics -->
+        <dependency>
+            <groupId>software.amazon.lambda</groupId>
+            <artifactId>powertools-metrics</artifactId>
+            <version>${powertools.version}</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Disable Spring Boot repackaging - we use shade plugin for Lambda -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Shade Plugin for Lambda uber JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <id>shade-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--enable-preview</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

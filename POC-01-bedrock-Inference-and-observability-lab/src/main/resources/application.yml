@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: bedrock-inference-lab
+
+server:
+  port: 8080
+
+# AWS Configuration
+aws:
+  region: ${AWS_REGION:us-east-1}
+
+# Bedrock Client Configuration
+bedrock:
+  client:
+    connection-timeout-ms: 10000
+    read-timeout-ms: 60000
+    max-retries: 3
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.jmontagne.bedrock: DEBUG
+    software.amazon.awssdk: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
