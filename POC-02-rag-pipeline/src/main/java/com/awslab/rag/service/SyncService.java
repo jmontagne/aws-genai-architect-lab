@@ -39,7 +39,7 @@ public class SyncService {
                 .thenApply(response -> {
                     var job = response.ingestionJob();
                     log.info("Ingestion job started: {}", job.ingestionJobId());
-                    return Map.of(
+                    return Map.<String, Object>of(
                             "jobId", job.ingestionJobId(),
                             "status", job.status().toString(),
                             "startedAt", job.startedAt().toString()
@@ -84,7 +84,7 @@ public class SyncService {
                         result.put("failureReasons", job.failureReasons());
                     }
 
-                    return result;
+                    return (Map<String, Object>) result;
                 })
                 .exceptionally(ex -> {
                     log.error("Failed to get ingestion job status", ex);

@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.bedrockagentruntime.BedrockAgentRuntimeAsyncClient;
 import software.amazon.awssdk.services.bedrockagentruntime.model.*;
 
+import software.amazon.awssdk.core.document.Document;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -99,7 +101,7 @@ public class RagService {
                 String text = reference.content() != null ? reference.content().text() : "";
                 String sourceUri = extractSourceUri(reference);
                 String score = reference.metadata() != null
-                        ? reference.metadata().getOrDefault("score", "N/A").toString()
+                        ? reference.metadata().getOrDefault("score", Document.fromString("N/A")).toString()
                         : "N/A";
 
                 var citationBuilder = Citation.builder()

@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.bedrockagentruntime.BedrockAgentRuntimeAsyncClient;
 import software.amazon.awssdk.services.bedrockagentruntime.model.*;
 
+import software.amazon.awssdk.core.document.Document;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,22 +101,18 @@ public class RetrievalService {
         if (filterMap.size() == 1) {
             var entry = filterMap.entrySet().iterator().next();
             return RetrievalFilter.builder()
-                    .equals(FilterAttribute.builder()
+                    .equalsValue(FilterAttribute.builder()
                             .key(entry.getKey())
-                            .value(DocumentAttributeValue.builder()
-                                    .stringValue(entry.getValue())
-                                    .build())
+                            .value(Document.fromString(entry.getValue()))
                             .build())
                     .build();
         }
 
         List<RetrievalFilter> filters = filterMap.entrySet().stream()
-                .map(entry -> RetrievalFilter.builder()
-                        .equals(FilterAttribute.builder()
+                .<RetrievalFilter>map(entry -> RetrievalFilter.builder()
+                        .equalsValue(FilterAttribute.builder()
                                 .key(entry.getKey())
-                                .value(DocumentAttributeValue.builder()
-                                        .stringValue(entry.getValue())
-                                        .build())
+                                .value(Document.fromString(entry.getValue()))
                                 .build())
                         .build())
                 .toList();
