@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Language Rules
+
+- **Conversation:** Polish (user prefers Polish communication)
+- **All files & code:** English only
+- **Git commits:** English only (no other languages allowed in commit messages)
+
 ## Project Overview
 
 AWS GenAI Architect Lab - A collection of isolated POCs for AWS Certified Generative AI Developer Professional (AIP-C01) exam preparation. Each POC explores a specific AWS GenAI concept with its own infrastructure.

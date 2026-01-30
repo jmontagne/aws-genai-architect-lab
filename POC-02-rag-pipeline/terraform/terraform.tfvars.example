@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars and adjust values as needed
+
+project_name = "poc02-rag"
+environment  = "dev"
+region       = "us-east-1"
+
+# Chunking strategy: FIXED_SIZE, HIERARCHICAL, SEMANTIC, or NONE
+chunking_strategy        = "FIXED_SIZE"
+chunk_max_tokens         = 300
+chunk_overlap_percentage = 20
