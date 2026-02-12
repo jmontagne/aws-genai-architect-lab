@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: poc03-tool-use-and-agents-test
+
+aws:
+  region: us-east-1
+  bedrock:
+    model-id: anthropic.claude-3-5-sonnet-20241022-v2:0
+    agent-id: test-agent-id
+    agent-alias-id: test-alias-id
+  dynamodb:
+    table-name: test-flights
+
+agent:
+  tool-use:
+    max-iterations: 5
+    temperature: 0.0
+    max-tokens: 1024

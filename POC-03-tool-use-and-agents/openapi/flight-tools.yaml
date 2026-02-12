@@ -1,0 +1,99 @@
+openapi: "3.0.3"
+info:
+  title: "Flight Tools API"
+  version: "1.0.0"
+  description: "Tools for searching and retrieving flight information"
+
+paths:
+  /searchFlights:
+    post:
+      operationId: "searchFlights"
+      summary: "Search available flights between two airports"
+      description: >
+        Searches the flight database for available flights on a given date.
+        Returns a list of matching flights with basic information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [origin, destination, date]
+              properties:
+                origin:
+                  type: string
+                  description: "IATA airport code for departure (e.g., WAW, CDG, JFK)"
+                destination:
+                  type: string
+                  description: "IATA airport code for arrival"
+                date:
+                  type: string
+                  format: date
+                  description: "Travel date in YYYY-MM-DD format"
+      responses:
+        "200":
+          description: "List of matching flights"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    flightId:
+                      type: string
+                    airline:
+                      type: string
+                    departureTime:
+                      type: string
+                    arrivalTime:
+                      type: string
+                    price:
+                      type: number
+
+  /getFlightDetails:
+    post:
+      operationId: "getFlightDetails"
+      summary: "Get detailed information about a specific flight"
+      description: >
+        Retrieves full details for a specific flight by its ID, including
+        aircraft type, available seats, baggage policy, and pricing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [flightId]
+              properties:
+                flightId:
+                  type: string
+                  description: "Unique flight identifier (e.g., LO335)"
+      responses:
+        "200":
+          description: "Flight details"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flightId:
+                    type: string
+                  airline:
+                    type: string
+                  origin:
+                    type: string
+                  destination:
+                    type: string
+                  departureTime:
+                    type: string
+                  arrivalTime:
+                    type: string
+                  aircraft:
+                    type: string
+                  availableSeats:
+                    type: integer
+                  price:
+                    type: number
+                  baggageIncluded:
+                    type: boolean

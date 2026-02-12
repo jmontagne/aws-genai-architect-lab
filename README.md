@@ -24,7 +24,7 @@ This repository is NOT a monolithic application. It is a **Laboratory** designed
 | :--- | :--- | :--- | :--- | :--- |
 | **POC-01** | *Fundamentals* | **Bedrock Inference & Observability**: Lambda deployment, streaming, Powertools logging. | Java 21 / Lambda / Terraform | ✅ Complete |
 | **POC-02** | *Architecture* | **The RAG Pipeline**: Advanced chunking & Knowledge Bases for Amazon Bedrock. | LangChain4j | ⏳ Planned |
-| **POC-03** | *Agents* | **Agentic Tools**: Autonomous agents querying SQL databases safely. | Java / Tools | ⏳ Planned |
+| **POC-03** | *Agents* | **Tool Use & Bedrock Agents**: Programmatic tool use (Converse API) vs. managed agents (Action Groups). | Java / AWS SDK v2 | ⏳ Planned |
 | **POC-04** | *Security* | **Security Guardrails**: PII filtering & GDPR compliance patterns. | Python / Boto3 | ⏳ Planned |
 | **POC-05** | *Evaluation* | **Automated Eval**: Ragas-based scoring and "LLM-as-a-Judge" metrics. | Python / Ragas | ⏳ Planned |
 | **POC-06** | *Multi-modal* | **Vision Claim Agent**: Processing visual data (e.g., accident photos) via Claude 3.5. | Java / Vision | ⏳ Planned |
