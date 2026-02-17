@@ -16,6 +16,12 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "s3_vector_index_name" {
+  description = "Name of the vector index inside the S3 Vector bucket"
+  type        = string
+  default     = "bedrock-kb-index"
+}
+
 variable "chunking_strategy" {
   description = "Chunking strategy: FIXED_SIZE, HIERARCHICAL, SEMANTIC, or NONE"
   type        = string

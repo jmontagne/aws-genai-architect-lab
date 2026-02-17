@@ -28,12 +28,12 @@ output "kb_role_arn" {
   value       = aws_iam_role.kb_role.arn
 }
 
-output "opensearch_collection_endpoint" {
-  description = "The endpoint of the OpenSearch Serverless collection"
-  value       = aws_opensearchserverless_collection.kb.collection_endpoint
+output "s3_vector_bucket_arn" {
+  description = "The ARN of the S3 Vector bucket"
+  value       = aws_s3vectors_vector_bucket.main.vector_bucket_arn
 }
 
-output "opensearch_collection_arn" {
-  description = "The ARN of the OpenSearch Serverless collection"
-  value       = aws_opensearchserverless_collection.kb.arn
+output "s3_vector_index_arn" {
+  description = "The ARN of the vector index"
+  value       = aws_s3vectors_index.main.index_arn
 }

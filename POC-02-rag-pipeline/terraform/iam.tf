@@ -87,21 +87,25 @@ resource "aws_iam_role_policy" "kb_bedrock_policy" {
   })
 }
 
-resource "aws_iam_role_policy" "kb_opensearch_policy" {
-  name = "${var.project_name}-kb-opensearch-policy"
+resource "aws_iam_role_policy" "kb_s3vectors_policy" {
+  name = "${var.project_name}-kb-s3vectors-policy"
   role = aws_iam_role.kb_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "OpenSearchServerlessAccess"
+        Sid    = "S3VectorBucketReadAndWrite"
         Effect = "Allow"
         Action = [
-          "aoss:APIAccessAll"
+          "s3vectors:PutVectors",
+          "s3vectors:GetVectors",
+          "s3vectors:DeleteVectors",
+          "s3vectors:QueryVectors",
+          "s3vectors:GetIndex"
         ]
         Resource = [
-          aws_opensearchserverless_collection.kb.arn
+          aws_s3vectors_index.main.index_arn
         ]
       }
     ]

@@ -1,8 +1,3 @@
-resource "time_sleep" "wait_for_collection" {
-  depends_on      = [aws_opensearchserverless_collection.kb]
-  create_duration = "60s"
-}
-
 resource "aws_bedrockagent_knowledge_base" "main" {
   name     = "${var.project_name}-kb"
   role_arn = aws_iam_role.kb_role.arn
@@ -15,21 +10,15 @@ resource "aws_bedrockagent_knowledge_base" "main" {
   }
 
   storage_configuration {
-    type = "OPENSEARCH_SERVERLESS"
-    opensearch_serverless_configuration {
-      collection_arn    = aws_opensearchserverless_collection.kb.arn
-      vector_index_name = "bedrock-knowledge-base-index"
-      field_mapping {
-        vector_field   = "vector"
-        text_field     = "text"
-        metadata_field = "metadata"
-      }
+    type = "S3_VECTORS"
+    s3_vectors_configuration {
+      index_arn = aws_s3vectors_index.main.index_arn
     }
   }
 
   depends_on = [
-    time_sleep.wait_for_collection,
-    aws_iam_role_policy.kb_opensearch_policy
+    aws_iam_role_policy.kb_s3vectors_policy,
+    aws_s3vectors_index.main
   ]
 
   tags = {

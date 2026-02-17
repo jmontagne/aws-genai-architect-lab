@@ -61,7 +61,7 @@ public class RagService {
                                 .retrievalConfiguration(r -> r
                                         .vectorSearchConfiguration(vs -> vs
                                                 .numberOfResults(results)
-                                                .overrideSearchType(SearchType.HYBRID)))
+                                                .overrideSearchType(SearchType.SEMANTIC)))
                                 .generationConfiguration(g -> g
                                         .inferenceConfig(ic -> ic
                                                 .textInferenceConfig(t -> t

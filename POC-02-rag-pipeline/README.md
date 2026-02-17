@@ -8,7 +8,7 @@ This POC teaches you how to build a complete **Retrieval-Augmented Generation (R
 2. **How documents become searchable** through chunking and embedding
 3. **Two retrieval patterns** — direct chunk retrieval vs. end-to-end generation
 4. **How to evaluate RAG quality** using the LLM-as-judge pattern
-5. **Infrastructure as Code** for the entire pipeline using Terraform
+5. **Pure IaC deployment** — entire pipeline managed by Terraform, zero scripts
 
 > **AIP-C01 Exam Relevance:** RAG accounts for roughly 15-20% of the exam. You need to understand when to choose Knowledge Bases over custom vector stores, the trade-offs between chunking strategies, and how to measure retrieval quality.
 
@@ -22,28 +22,11 @@ Large Language Models (LLMs) are trained on a fixed dataset. When you ask about 
 
 **RAG solves this** by adding a retrieval step before generation:
 
-```
-User Query
-    │
-    ▼
-┌─────────────────────┐
-│  1. RETRIEVE         │  Search a vector database for relevant document chunks
-│     (Embedding +     │  that match the user's query
-│      Similarity)     │
-└──────────┬──────────┘
-           │  relevant chunks
-           ▼
-┌─────────────────────┐
-│  2. AUGMENT          │  Inject those chunks into the LLM prompt as context:
-│     (Prompt          │  "Based on the following documents: {chunks},
-│      Construction)   │   answer: {query}"
-└──────────┬──────────┘
-           │  enriched prompt
-           ▼
-┌─────────────────────┐
-│  3. GENERATE         │  The LLM answers using ONLY the provided context,
-│     (LLM Call)       │  reducing hallucinations and enabling source citations
-└─────────────────────┘
+```mermaid
+flowchart TD
+    A["User Query"] --> B["1. RETRIEVE Embedding + Similarity Search Find relevant document chunks"]
+    B -->|relevant chunks| C["2. AUGMENT<br/>Prompt Construction<br/>Inject chunks as context"]
+    C -->|enriched prompt| D["3. GENERATE<br/>LLM Call<br/>Answer using ONLY provided context"]
 ```
 
 The key insight: **the model does not need to "know" the answer — it just needs to read and summarize the relevant documents you provide.**
@@ -52,28 +35,11 @@ The key insight: **the model does not need to "know" the answer — it just need
 
 Before you can retrieve anything, documents must go through an ingestion pipeline:
 
-```
-Source Documents (S3)
-    │
-    ▼
-┌─────────────────────┐
-│  CHUNKING            │  Split large documents into smaller pieces.
-│                      │  Why? Embedding models have token limits,
-│                      │  and smaller chunks are more precise to retrieve.
-└──────────┬──────────┘
-           │  chunks (300-500 tokens each)
-           ▼
-┌─────────────────────┐
-│  EMBEDDING           │  Convert each text chunk into a numeric vector
-│                      │  (a list of 1024 floating-point numbers).
-│  Model: Titan V2     │  Semantically similar texts produce similar vectors.
-└──────────┬──────────┘
-           │  vectors
-           ▼
-┌─────────────────────┐
-│  VECTOR STORE        │  Store vectors in a database optimized for
-│  (OpenSearch)        │  similarity search (nearest-neighbor lookup).
-└─────────────────────┘
+```mermaid
+flowchart TD
+    A["Source Documents (S3)"] --> B["CHUNKING<br/>Split large documents into smaller pieces<br/>Embedding models have token limits,<br/>smaller chunks are more precise"]
+    B -->|"chunks (300-500 tokens each)"| C["EMBEDDING<br/>Convert each chunk into a numeric vector<br/>(1024 floating-point numbers)<br/>Model: Titan Embeddings V2"]
+    C -->|vectors| D["VECTOR STORE<br/>(S3 Vectors)<br/>Store vectors optimized for<br/>similarity search"]
 ```
 
 This is exactly what Amazon Bedrock Knowledge Bases manages for you automatically.
@@ -93,53 +59,30 @@ This POC implements both patterns so you can compare them:
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                          POC-02: RAG Pipeline                                │
-│                                                                              │
-│  ┌─────────────┐         ┌───────────────────────────────────────────────┐  │
-│  │             │         │         Amazon Bedrock Knowledge Base          │  │
-│  │     S3      │         │  ┌─────────────────────────────────────────┐  │  │
-│  │   Bucket    │────────▶│  │          Data Source (S3)                │  │  │
-│  │             │  sync   │  │  - Chunking: Fixed Size (300 tokens)    │  │  │
-│  │  /docs/     │         │  │  - Overlap: 20%                         │  │  │
-│  │             │         │  └─────────────────────────────────────────┘  │  │
-│  └─────────────┘         │                    │                          │  │
-│                          │                    ▼                          │  │
-│                          │  ┌─────────────────────────────────────────┐  │  │
-│                          │  │        Titan Embeddings V2              │  │  │
-│                          │  │        1024 dimensions, 8K tokens       │  │  │
-│                          │  └─────────────────────────────────────────┘  │  │
-│                          │                    │                          │  │
-│                          │                    ▼                          │  │
-│                          │  ┌─────────────────────────────────────────┐  │  │
-│                          │  │        Managed Vector Store             │  │  │
-│                          │  │        (OpenSearch Serverless)          │  │  │
-│                          │  └─────────────────────────────────────────┘  │  │
-│                          └──────────────────┬────────────────────────────┘  │
-│                                             │                               │
-│                                   Bedrock Agent Runtime API                 │
-│                                             │                               │
-│  ┌──────────────────────────────────────────▼────────────────────────────┐  │
-│  │              Java Application (Spring Boot 3.4)                       │  │
-│  │                                                                       │  │
-│  │  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────────┐   │  │
-│  │  │RetrievalService  │  │   RagService     │  │EvaluationService  │   │  │
-│  │  │                  │  │                  │  │                   │   │  │
-│  │  │ retrieve()       │  │ generate()       │  │ relevance()       │   │  │
-│  │  │ + filter support │  │ + citations      │  │ groundedness()    │   │  │
-│  │  └──────────────────┘  └──────────────────┘  └───────────────────┘   │  │
-│  │                                                                       │  │
-│  │  ┌──────────────────┐  ┌──────────────────────────────────────────┐  │  │
-│  │  │  SyncService     │  │            REST API (/api/v1)            │  │  │
-│  │  │                  │  │                                          │  │  │
-│  │  │ startSync()      │  │  POST /retrieve    POST /generate       │  │  │
-│  │  │ getSyncStatus()  │  │  POST /evaluate    POST /sync/{id}      │  │  │
-│  │  └──────────────────┘  │  GET  /sync/{id}/status/{jobId}         │  │  │
-│  │                        │  GET  /health                            │  │  │
-│  │                        └──────────────────────────────────────────┘  │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph AWS["POC-02: RAG Pipeline"]
+        subgraph TF["Terraform-managed (single apply)"]
+            S3["S3 Bucket<br/>/docs/ + test documents"]
+            S3V["S3 Vectors<br/>Vector bucket + index<br/>1024 dim, cosine"]
+            IAM["IAM Role<br/>Bedrock + S3 + S3 Vectors"]
+            subgraph KB["Amazon Bedrock Knowledge Base"]
+                DS["Data Source (S3)<br/>Chunking: Fixed Size (300 tokens)<br/>Overlap: 20%"]
+                Titan["Titan Embeddings V2<br/>1024 dimensions, 8K tokens"]
+            end
+        end
+        S3 -->|sync| DS
+        DS --> Titan --> S3V
+        S3V --> API["Bedrock Agent Runtime API"]
+        subgraph App["Java Application (Spring Boot 3.4)"]
+            RS["RetrievalService<br/>retrieve() + filter"]
+            RAG["RagService<br/>generate() + citations"]
+            ES["EvaluationService<br/>relevance + groundedness"]
+            SS["SyncService<br/>startSync + status"]
+            REST["REST API (/api/v1)<br/>POST /retrieve<br/>POST /generate<br/>POST /evaluate<br/>POST /sync/{id}<br/>GET /health"]
+        end
+        API --> App
+    end
 ```
 
 ---
@@ -152,8 +95,8 @@ This POC implements both patterns so you can compare them:
 | Storage | Amazon S3 | - | Scalable document storage with versioning |
 | Knowledge Base | Bedrock KB | - | Fully managed RAG — no vector DB ops needed |
 | Embeddings | Titan Embeddings V2 | v2:0 | AWS-native, 1024 dimensions, 8K token context |
-| Vector Store | OpenSearch Serverless | - | Managed by KB — zero operational overhead |
-| LLM | Claude 3 Sonnet | v1 | Strong reasoning with source attribution |
+| Vector Store | Amazon S3 Vectors | - | Cost-effective pay-per-use vector storage (Terraform-managed) |
+| LLM | Claude 3 Haiku | v1 | Fast, cheap, sufficient for POC evaluation |
 | Application | Java 21 | 21 | Modern Java with virtual threads support |
 | Framework | Spring Boot | 3.4 | Production-ready REST API framework |
 | AWS SDK | AWS SDK v2 | 2.29+ | Async clients via `CompletableFuture` |
@@ -164,14 +107,15 @@ This POC implements both patterns so you can compare them:
 
 ```
 POC-02-rag-pipeline/
-├── terraform/                          # Infrastructure as Code
-│   ├── main.tf                         # AWS provider configuration
-│   ├── variables.tf                    # Input variables (region, project name)
+├── terraform/                          # Infrastructure as Code (all resources)
+│   ├── main.tf                         # AWS provider configuration (v6.27+)
+│   ├── variables.tf                    # Input variables (region, chunking config)
 │   ├── s3.tf                           # Document storage bucket
-│   ├── iam.tf                          # Knowledge Base execution role
-│   ├── knowledge-base.tf               # Bedrock KB + S3 data source
-│   ├── opensearch.tf                   # OpenSearch Serverless collection
-│   ├── outputs.tf                      # Exported values (KB ID, bucket name)
+│   ├── s3-vectors.tf                   # S3 Vector bucket + index (1024 dim, cosine)
+│   ├── documents.tf                    # Test document upload to S3
+│   ├── iam.tf                          # KB execution role + S3 Vectors permissions
+│   ├── knowledge-base.tf              # Bedrock KB + S3 data source
+│   ├── outputs.tf                      # Exported values (KB ID, bucket name, ARNs)
 │   └── terraform.tfvars.example        # Example variable values
 │
 ├── src/main/java/com/awslab/rag/
@@ -202,7 +146,7 @@ POC-02-rag-pipeline/
 │   ├── service/
 │   │   ├── RetrievalServiceTest.java   # 11 tests
 │   │   ├── RagServiceTest.java         # 10 tests
-│   │   ├── EvaluationServiceTest.java  # 9 tests
+│   │   ├── EvaluationServiceTest.java  # 10 tests
 │   │   └── SyncServiceTest.java        # 10 tests
 │   ├── exception/
 │   │   └── GlobalExceptionHandlerTest.java  # 9 tests
@@ -217,8 +161,7 @@ POC-02-rag-pipeline/
 │   └── lambda-best-practices.md
 │
 ├── scripts/
-│   ├── sync-knowledge-base.sh          # Trigger KB document ingestion
-│   └── test-queries.sh                 # Sample API calls for manual testing
+│   └── test-queries.sh                 # Sample API calls for manual smoke testing
 │
 ├── pom.xml                             # Maven build configuration
 └── README.md
@@ -264,16 +207,50 @@ chunking_configuration {
 
 ---
 
-## Deep Dive: Search Types
+## Deep Dive: Search Types and S3 Vectors
 
 When retrieving chunks, you choose how the vector database matches your query:
 
 | Search Type | How It Works | Strengths | Weaknesses |
 |-------------|-------------|-----------|------------|
-| **SEMANTIC** | Converts query to a vector and finds nearest neighbors | Understands meaning ("car" matches "vehicle") | May miss exact keyword matches |
-| **HYBRID** | Combines semantic similarity with keyword (BM25) search | Best of both worlds — meaning + exact terms | Slightly higher latency |
+| **SEMANTIC** | Converts query to a vector and finds nearest neighbors by cosine distance | Understands meaning ("car" matches "vehicle") | May miss exact keyword matches |
+| **HYBRID** | Combines semantic similarity with keyword (BM25) search | Best of both worlds — meaning + exact terms | Slightly higher latency, **not supported by S3 Vectors** |
 
-This POC uses **HYBRID** as the default because it consistently produces the best results for mixed-content document sets.
+### Why This POC Uses SEMANTIC
+
+S3 Vectors is a lightweight, cost-effective vector store that supports **SEMANTIC search only**. HYBRID search requires a full-featured vector database (e.g., OpenSearch Serverless) that maintains both a vector index and an inverted keyword index.
+
+This is a deliberate trade-off:
+
+| | S3 Vectors | OpenSearch Serverless |
+|---|---|---|
+| **Search types** | SEMANTIC only | SEMANTIC + HYBRID |
+| **Minimum cost** | $0/month (pay-per-use) | ~$700/month (4 OCUs minimum) |
+| **Terraform support** | `aws_s3vectors_vector_bucket` + `aws_s3vectors_index` | `aws_opensearchserverless_collection` |
+| **Best for** | POCs, low-traffic workloads | Production with keyword-heavy queries |
+
+> **Exam Tip:** If the question mentions "cost-effective vector store" or "pay-per-use", the answer is S3 Vectors. If it mentions "hybrid search" or "BM25", the answer is OpenSearch Serverless. Know the trade-off.
+
+### S3 Vectors Metadata Configuration
+
+S3 Vectors enforces a **2048-byte limit on filterable metadata**. Bedrock Knowledge Bases stores two internal keys per chunk:
+
+- `AMAZON_BEDROCK_TEXT` — the actual chunk text (can be thousands of bytes)
+- `AMAZON_BEDROCK_METADATA` — source URI, metadata attributes
+
+Both must be declared as **non-filterable** to avoid ingestion failures:
+
+```hcl
+# In terraform/s3-vectors.tf
+resource "aws_s3vectors_index" "main" {
+  # ...
+  metadata_configuration {
+    non_filterable_metadata_keys = ["AMAZON_BEDROCK_TEXT", "AMAZON_BEDROCK_METADATA"]
+  }
+}
+```
+
+> **Gotcha:** If you forget this, ingestion succeeds at scanning but all documents fail with "Filterable metadata must have at most 2048 bytes". This is the single most common S3 Vectors + Bedrock KB integration error.
 
 ---
 
@@ -283,28 +260,18 @@ How do you know if your RAG pipeline is working well? You cannot manually review
 
 ### Two Metrics Implemented
 
-**1. Relevance** — Are the retrieved chunks actually relevant to the query?
-
-```
-Prompt to judge LLM:
-  "Rate the relevance of these chunks to the query on a scale of 0-10.
-   Query: {user_query}
-   Chunks: {retrieved_chunks}
-   Return ONLY a number."
-
-Score = LLM_response / 10.0    →    0.0 to 1.0
-```
-
-**2. Groundedness** — Is the generated answer supported by the retrieved chunks?
-
-```
-Prompt to judge LLM:
-  "Rate how well this answer is supported by the source chunks.
-   Answer: {generated_answer}
-   Chunks: {retrieved_chunks}
-   Return ONLY a number."
-
-Score = LLM_response / 10.0    →    0.0 to 1.0
+```mermaid
+flowchart LR
+    subgraph Relevance["1. Relevance (Retrieval Quality)"]
+        Q1["Query"] --> J1["Judge LLM<br/>Rate 0-10"]
+        C1["Retrieved Chunks"] --> J1
+        J1 --> S1["Score / 10 → 0.0-1.0"]
+    end
+    subgraph Groundedness["2. Groundedness (Generation Quality)"]
+        A1["Generated Answer"] --> J2["Judge LLM<br/>Rate 0-10"]
+        C2["Retrieved Chunks"] --> J2
+        J2 --> S2["Score / 10 → 0.0-1.0"]
+    end
 ```
 
 **Why this matters:** A relevance score of 0.3 tells you your retrieval needs tuning (wrong chunking, too few results). A groundedness score of 0.4 tells you the LLM is fabricating instead of using the provided context.
@@ -319,38 +286,49 @@ Score = LLM_response / 10.0    →    0.0 to 1.0
 
 - Java 21
 - Maven 3.9+
-- AWS CLI configured with appropriate credentials
+- AWS CLI v2 configured with appropriate credentials
 - Terraform >= 1.5
 
-### Step 1: Deploy Infrastructure
+### Step 1: Deploy Infrastructure (single command)
+
+Everything is managed by Terraform — S3 bucket, S3 Vectors (bucket + index), IAM roles, Knowledge Base, data source, and test document upload:
 
 ```bash
 cd POC-02-rag-pipeline/terraform/
-cp terraform.tfvars.example terraform.tfvars   # Edit with your values
+cp terraform.tfvars.example terraform.tfvars   # Edit if needed
 terraform init
-terraform plan
 terraform apply
 ```
 
-Note the outputs: `knowledge_base_id`, `data_source_id`, `bucket_name`.
+Note the outputs — you'll need `knowledge_base_id` and `data_source_id`.
 
-### Step 2: Upload Documents and Sync
+### Step 2: Trigger Knowledge Base Ingestion
+
+After Terraform uploads documents to S3, trigger the ingestion job to chunk, embed, and index them:
 
 ```bash
-# Upload test documents to S3
-aws s3 sync test-docs/ s3://<bucket_name>/
-
-# Trigger Knowledge Base ingestion
-./scripts/sync-knowledge-base.sh <knowledge_base_id> <data_source_id>
+aws bedrock-agent start-ingestion-job \
+    --knowledge-base-id <KB_ID> \
+    --data-source-id <DS_ID> \
+    --region us-east-1
 ```
 
-The sync job reads documents from S3, chunks them, generates embeddings, and stores vectors in OpenSearch. This runs asynchronously — use the sync status endpoint to monitor progress.
+Monitor progress (typically completes in under 30 seconds for test docs):
+
+```bash
+aws bedrock-agent get-ingestion-job \
+    --knowledge-base-id <KB_ID> \
+    --data-source-id <DS_ID> \
+    --ingestion-job-id <JOB_ID> \
+    --query 'ingestionJob.{status:status,stats:statistics}' \
+    --region us-east-1
+```
 
 ### Step 3: Run the Application
 
 ```bash
-export KNOWLEDGE_BASE_ID=<your-kb-id>
-mvn spring-boot:run
+cd POC-02-rag-pipeline/
+KNOWLEDGE_BASE_ID=<your-kb-id> mvn spring-boot:run
 ```
 
 The API will be available at `http://localhost:8080`.
@@ -362,6 +340,15 @@ mvn test
 ```
 
 All 62 unit tests use mocked AWS SDK clients and run without any AWS infrastructure.
+
+### Teardown
+
+```bash
+cd terraform/
+terraform destroy
+```
+
+That's it. Terraform handles everything — including S3 Vectors bucket deletion (`force_destroy = true`).
 
 ---
 
@@ -377,7 +364,7 @@ curl -X POST http://localhost:8080/api/v1/retrieve \
   -d '{
     "query": "What are the pillars of AWS Well-Architected Framework?",
     "numberOfResults": 5,
-    "searchType": "HYBRID",
+    "searchType": "SEMANTIC",
     "filter": {"category": "architecture"}
   }'
 ```
@@ -422,7 +409,7 @@ curl -X POST http://localhost:8080/api/v1/evaluate \
 Triggers an ingestion job to sync new or updated documents from S3 into the Knowledge Base.
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/sync/ds-001
+curl -X POST http://localhost:8080/api/v1/sync/<data-source-id>
 ```
 
 **Response:** Job ID, status, and start timestamp.
@@ -430,7 +417,7 @@ curl -X POST http://localhost:8080/api/v1/sync/ds-001
 ### GET /api/v1/sync/{dataSourceId}/status/{jobId} — Check Sync Status
 
 ```bash
-curl http://localhost:8080/api/v1/sync/ds-001/status/job-001
+curl http://localhost:8080/api/v1/sync/<data-source-id>/status/<job-id>
 ```
 
 **Response:** Job status (STARTING, IN_PROGRESS, COMPLETE, FAILED), timestamps, document statistics, and failure reasons if applicable.
@@ -481,49 +468,18 @@ This is implemented in `RetrievalService.buildFilter()` using the AWS SDK's `Ret
 
 ---
 
-## Experiments to Try
-
-These experiments help you build intuition for exam questions about RAG tuning.
-
-### Experiment 1: Chunking Strategy Comparison
-
-1. Create 3 Knowledge Bases with Fixed, Hierarchical, and Semantic chunking
-2. Upload the same `test-docs/` to each
-3. Run the same 10 queries against each using `/api/v1/retrieve`
-4. Compare relevance scores using `/api/v1/evaluate`
-
-| Strategy | Expected Avg Relevance | Expected Avg Latency | Best For |
-|----------|----------------------|---------------------|----------|
-| Fixed (300) | ~0.75 | ~120ms | General purpose |
-| Hierarchical | ~0.82 | ~150ms | Structured documents |
-| Semantic | ~0.85 | ~200ms | Narratives and articles |
-
-### Experiment 2: Number of Results
-
-Vary `numberOfResults` (3, 5, 10, 20) and observe:
-- **More results** = more context for the LLM = potentially better answers, but also more noise and higher token cost
-- **Fewer results** = more focused, cheaper, but might miss relevant information
-
-### Experiment 3: SEMANTIC vs. HYBRID Search
-
-Run identical queries with each search type and compare:
-- **SEMANTIC** is better when queries use different words than the documents
-- **HYBRID** is better when exact terms matter (product names, error codes)
-
----
-
 ## Cost Analysis
 
 | Resource | Pricing | POC Estimate |
 |----------|---------|--------------|
-| Bedrock KB (managed store) | Included | $0 |
-| OpenSearch Serverless (managed) | Included with KB | $0 |
+| Bedrock KB | No charge for the KB itself | $0 |
+| S3 Vectors | Pay per vector stored + query | ~$0.01/month |
 | Titan Embeddings V2 | $0.00002/1K tokens | ~$0.10/month |
-| Claude 3 Sonnet | $0.003/1K input, $0.015/1K output | ~$2/month |
+| Claude 3 Haiku | $0.00025/1K input, $0.00125/1K output | ~$0.20/month |
 | S3 Storage | $0.023/GB | ~$0.01/month |
-| **Total POC Cost** | | **< $3/month** |
+| **Total POC Cost** | | **< $0.50/month** |
 
-> **Key Learning:** Using Bedrock's managed Knowledge Base avoids the $700+/month minimum cost of self-managed OpenSearch Serverless. This is a critical cost optimization point for the exam.
+> **Key Learning:** Using S3 Vectors instead of OpenSearch Serverless saves ~$350/month in baseline costs. OpenSearch Serverless requires a minimum of 4 OCUs ($0.24/h each), which adds up to ~$700/month even with zero queries. S3 Vectors has no minimum — you pay only for what you use.
 
 ---
 
@@ -531,12 +487,15 @@ Run identical queries with each search type and compare:
 
 | Symptom | Likely Cause | Solution |
 |---------|-------------|----------|
-| KB sync fails | Missing IAM permissions | Verify role has `s3:GetObject` and `s3:ListBucket` |
+| Ingestion: "Filterable metadata must have at most 2048 bytes" | Missing non-filterable keys in S3 Vectors index | Add `AMAZON_BEDROCK_TEXT` and `AMAZON_BEDROCK_METADATA` to `non_filterable_metadata_keys` |
+| "HYBRID search type is not supported" | S3 Vectors only supports SEMANTIC | Change search type to `SEMANTIC` in request or `application.yml` |
+| KB sync fails | Missing IAM permissions | Verify role has `s3:GetObject`, `s3:ListBucket`, and `s3vectors:*` |
 | Empty retrieval results | Sync not complete | Check sync status — ingestion is async |
 | Low relevance scores | Suboptimal chunking | Try Hierarchical for structured docs, increase overlap |
 | High retrieval latency | Knowledge Base cold start | KB scales down after inactivity; first request is slower |
 | "Model not available" error | Region mismatch | Model ARN region must match KB region |
 | Throttling errors (429) | Too many concurrent requests | Implement exponential backoff (handled by `RagException.THROTTLING`) |
+| `terraform init` slow (800MB+) | AWS provider is a monolithic binary | Normal — cached after first run. Delete `.terraform/` to reclaim space between sessions |
 
 ---
 
@@ -547,25 +506,27 @@ Run identical queries with each search type and compare:
 | **Domain 1** | Knowledge Base architecture | `terraform/knowledge-base.tf`, `BedrockConfig.java` |
 | **Domain 1** | Chunking strategies | Terraform chunking config, Deep Dive section above |
 | **Domain 1** | Embedding model selection | Titan V2 in `knowledge-base.tf` and `application.yml` |
+| **Domain 1** | Vector store selection | S3 Vectors vs. OpenSearch trade-off in Deep Dive section |
 | **Domain 2** | Retrieve API | `RetrievalService.java` — direct chunk retrieval |
 | **Domain 2** | RetrieveAndGenerate API | `RagService.java` — end-to-end RAG with citations |
 | **Domain 2** | Metadata filtering | `RetrievalService.buildFilter()` with `equalsValue()` / `andAll()` |
 | **Domain 2** | Source attribution | `RagService.extractCitations()` — span mapping |
 | **Domain 3** | RAG evaluation metrics | `EvaluationService.java` — LLM-as-judge pattern |
-| **Domain 4** | Cost optimization | Managed KB vs. self-hosted comparison |
+| **Domain 4** | Cost optimization | S3 Vectors vs. OpenSearch Serverless comparison |
 
 ---
 
 ## Success Criteria
 
-- [ ] Terraform deploys all resources without errors
-- [ ] Knowledge Base syncs documents from S3 successfully
-- [ ] Retrieve API returns relevant chunks (relevance > 0.7)
-- [ ] RetrieveAndGenerate produces answers grounded in source documents
-- [ ] Citations correctly reference source S3 URIs
-- [ ] Metadata filtering narrows results to matching documents only
-- [ ] Evaluation service computes relevance and groundedness scores
-- [ ] All 62 unit tests pass (`mvn test`)
+- [x] Terraform deploys all resources without errors (18 resources in ~20s)
+- [x] S3 Vector bucket and index created via Terraform (`aws_s3vectors_*`)
+- [x] Test documents uploaded to S3 via Terraform (`aws_s3_object`)
+- [x] Knowledge Base syncs documents successfully (3 docs, ~7s)
+- [x] Retrieve API returns relevant chunks (relevance > 0.7)
+- [x] RetrieveAndGenerate produces answers grounded in source documents
+- [x] Citations correctly reference source S3 URIs
+- [x] Evaluation service computes relevance and groundedness scores
+- [x] All 62 unit tests pass (`mvn test`)
 - [ ] You can explain chunking trade-offs for the exam
 
 ---
@@ -573,7 +534,11 @@ Run identical queries with each search type and compare:
 ## References
 
 - [Amazon Bedrock Knowledge Bases — User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html)
+- [Amazon S3 Vectors — User Guide](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors.html)
+- [S3 Vectors with Bedrock KB](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-bedrock-kb.html)
 - [Chunking and Parsing Configuration](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-chunking-parsing.html)
 - [RetrieveAndGenerate API Reference](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent-runtime_RetrieveAndGenerate.html)
+- [Terraform: aws_s3vectors_vector_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3vectors_vector_bucket)
+- [Terraform: aws_s3vectors_index](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3vectors_index)
 - [Terraform: aws_bedrockagent_knowledge_base](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base)
 - [AWS SDK for Java v2 — Bedrock Agent Runtime](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/bedrockagentruntime/package-summary.html)

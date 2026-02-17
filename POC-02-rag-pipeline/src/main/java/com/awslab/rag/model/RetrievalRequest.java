@@ -23,7 +23,7 @@ public record RetrievalRequest(
             numberOfResults = 5;
         }
         if (searchType == null) {
-            searchType = "HYBRID";
+            searchType = "SEMANTIC";
         }
     }
 }

@@ -4,6 +4,9 @@ project_name = "poc02-rag"
 environment  = "dev"
 region       = "us-east-1"
 
+# S3 Vector index name (bucket is auto-created by Terraform)
+s3_vector_index_name = "bedrock-kb-index"
+
 # Chunking strategy: FIXED_SIZE, HIERARCHICAL, SEMANTIC, or NONE
 chunking_strategy        = "FIXED_SIZE"
 chunk_max_tokens         = 300
