@@ -16,7 +16,7 @@ AWS GenAI Architect Lab - A collection of isolated POCs for AWS Certified Genera
 
 ## Tech Stack
 
-- **Application:** Java 21 / Spring Boot 3.4 / LangChain4j (POC-01, 02, 03, 06)
+- **Application:** Java 21 / Spring Boot 3.4 / AWS SDK v2 (POC-01, 02, 03), LangChain4j (POC-06)
 - **Operations/Evaluation:** Python 3.12 / Boto3 / Ragas (POC-04, 05, 07)
 - **Infrastructure:** Terraform (all POCs)
 - **Runtime:** AWS SDK for Java v2 (Asynchronous Client)
@@ -60,9 +60,9 @@ POC-XX-name/
 
 | POC | Focus | Stack | Status |
 |-----|-------|-------|--------|
-| POC-01 | Bedrock Inference & Observability | Java SDK v2 | Active |
-| POC-02 | RAG Pipeline & Knowledge Bases | LangChain4j | Planned |
-| POC-03 | Tool Use & Bedrock Agents | Java / AWS SDK v2 | Planned |
+| POC-01 | Bedrock Inference & Observability | Java / AWS SDK v2 | Complete |
+| POC-02 | RAG Pipeline & Knowledge Bases | Java / AWS SDK v2 | Active |
+| POC-03 | Tool Use & Bedrock Agents | Java / AWS SDK v2 | In Progress |
 | POC-04 | Security Guardrails (PII/GDPR) | Python/Boto3 | Planned |
 | POC-05 | Automated Evaluation (Ragas) | Python/Ragas | Planned |
 | POC-06 | Multi-modal Vision | Java/Vision | Planned |
