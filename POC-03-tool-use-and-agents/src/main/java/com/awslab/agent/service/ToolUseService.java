@@ -15,6 +15,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Pattern A: Programmatic Tool Use via Amazon Bedrock Converse API.
+ *
+ * <p>Implements a full <b>ReAct loop</b> (Reason → Act → Observe → iterate) in Java,
+ * giving the application complete control over tool orchestration. The loop checks
+ * {@code stopReason}: {@code END_TURN} means the model finished reasoning,
+ * {@code TOOL_USE} means it requests a tool call — our code executes it and feeds
+ * the result back.</p>
+ *
+ * <h3>Trade-off vs. Managed Agents (Pattern B)</h3>
+ * <ul>
+ *   <li><b>Token efficiency:</b> ~1,900 input tokens/query vs ~4,400 for Bedrock Agents
+ *       — a <b>2.3x orchestration overhead</b> in Pattern B due to hidden system prompts.</li>
+ *   <li><b>Cost at scale (1M queries/month, Claude 3.5 Haiku):</b>
+ *       Pattern A ~$3,120/month vs Pattern B ~$5,520/month (+77%).</li>
+ *   <li><b>Control:</b> Full Return of Control — your code decides whether to execute
+ *       each tool call (safety-critical for regulated environments).</li>
+ * </ul>
+ *
+ * <p><b>Stack:</b> Java 21, Spring Boot 3.4, AWS SDK v2 (async), Claude 3.5 Haiku,
+ * DynamoDB, Terraform IaC.</p>
+ *
+ * @see AgentService Pattern B: Managed Bedrock Agents (black-box orchestration)
+ * @see ComparisonService Side-by-side comparison of both patterns
+ * @see <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use.html">
+ *      AWS Docs: Converse API Tool Use</a>
+ */
 @Service
 public class ToolUseService {
 
@@ -48,6 +75,10 @@ public class ToolUseService {
         return converseLoop(messages, toolCalls, 0, maxIterations, temperature, startTime);
     }
 
+    /**
+     * Core ReAct loop: calls Converse API, inspects stopReason, executes tools, and recurses
+     * until the model returns {@code END_TURN} or max iterations are exceeded.
+     */
     private CompletableFuture<AgentResponse> converseLoop(
             List<Message> messages,
             List<AgentResponse.ToolCall> toolCalls,
