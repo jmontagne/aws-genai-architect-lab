@@ -17,6 +17,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Pattern: End-to-end RAG via Amazon Bedrock Knowledge Bases RetrieveAndGenerate API.
+ *
+ * <p>Performs retrieval and answer generation in a single API call. Returns a generated
+ * answer with <b>source citations and text span mapping</b> — each citation includes the
+ * exact character range in the generated answer that it supports.</p>
+ *
+ * <h3>Trade-off vs. Retrieve-only ({@link RetrievalService})</h3>
+ * <ul>
+ *   <li><b>RetrieveAndGenerate:</b> One API call, built-in citation extraction, less code.
+ *       Best for standard Q&amp;A with source attribution.</li>
+ *   <li><b>Retrieve:</b> Two API calls (retrieve + custom inference), full prompt control.
+ *       Best for multi-step reasoning or custom post-processing.</li>
+ * </ul>
+ *
+ * <h3>Cost Profile</h3>
+ * <p>Uses Claude 3 Haiku ($0.00025/$0.00125 per 1K tokens) with S3 Vectors
+ * (~$0/month for POC scale) — total POC cost &lt; $0.50/month.</p>
+ *
+ * @see RetrievalService Raw chunk retrieval pattern
+ * @see EvaluationService LLM-as-Judge quality scoring
+ */
 @Service
 public class RagService {
 

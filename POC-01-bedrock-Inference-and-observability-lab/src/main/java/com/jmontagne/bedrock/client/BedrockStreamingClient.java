@@ -17,6 +17,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Reactive bridge between the Bedrock Converse Stream API and Project Reactor.
+ *
+ * <p>Converts the AWS SDK's callback-based {@link ConverseStreamResponseHandler} into a
+ * reactive {@code Flux<String>} using {@link Sinks.Many}. This enables backpressure-aware
+ * streaming and composability with Spring WebFlux.</p>
+ *
+ * <h3>TTFT Measurement</h3>
+ * <p>Tracks <b>Time-To-First-Token (TTFT)</b> independently of total generation time.
+ * The first {@link ContentBlockDeltaEvent} triggers a timestamp capture, giving an
+ * accurate measure of model inference latency without including network or generation time.</p>
+ *
+ * <h3>Token Usage Tracking</h3>
+ * <p>Extracts input/output token counts from {@link ConverseStreamMetadataEvent} for
+ * cost calculation and observability. Metrics are captured via {@link PerformanceMetrics}
+ * and logged on stream completion.</p>
+ *
+ * @see InferenceService High-level orchestration layer
+ */
 @Component
 public class BedrockStreamingClient {
 

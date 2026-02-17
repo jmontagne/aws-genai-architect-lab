@@ -18,6 +18,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Pattern: Raw chunk retrieval via Amazon Bedrock Knowledge Bases Retrieve API.
+ *
+ * <p>Returns document chunks with relevance scores without generating a final answer.
+ * Use this pattern when you need custom prompt engineering, post-processing, or
+ * multi-step reasoning over retrieved context.</p>
+ *
+ * <h3>Search Modes</h3>
+ * <ul>
+ *   <li><b>SEMANTIC:</b> Vector similarity search using Titan Embeddings V2 (1024 dim,
+ *       cosine similarity) — best for natural language queries.</li>
+ *   <li><b>HYBRID:</b> Combines semantic search with keyword matching — better for
+ *       queries containing specific terms or IDs.</li>
+ * </ul>
+ *
+ * <h3>Metadata Filtering</h3>
+ * <p>Supports attribute-based filtering to narrow search scope before vector similarity
+ * is computed — reduces noise and improves relevance without additional token cost.</p>
+ *
+ * @see RagService End-to-end RAG with RetrieveAndGenerate (includes answer generation + citations)
+ * @see EvaluationService LLM-as-Judge evaluation of retrieval quality
+ */
 @Service
 public class RetrievalService {
 

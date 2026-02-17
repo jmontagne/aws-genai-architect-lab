@@ -13,6 +13,16 @@ import software.amazon.awssdk.services.bedrockagent.model.IngestionJobStatus;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Manages Knowledge Base data source ingestion (sync) jobs.
+ *
+ * <p>Triggers and monitors the ingestion pipeline that processes source documents
+ * from S3 into the vector store (S3 Vectors). The pipeline performs: document parsing,
+ * chunking (Fixed Size, 300 tokens, 20% overlap), embedding via Titan Embeddings V2,
+ * and vector indexing.</p>
+ *
+ * @see RetrievalService Queries the indexed vectors after sync completes
+ */
 @Service
 public class SyncService {
 

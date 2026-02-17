@@ -12,6 +12,27 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/**
+ * Orchestrates Bedrock inference with streaming and model comparison capabilities.
+ *
+ * <p>Provides two inference modes via the Bedrock Converse API:</p>
+ * <ul>
+ *   <li><b>Streaming ({@link #streamWithJacquesMontagne}):</b> Returns a reactive {@code Flux<String>}
+ *       of token chunks — enables Time-To-First-Token (TTFT) measurement independently of
+ *       total generation time.</li>
+ *   <li><b>Non-streaming ({@link #inferWithJacquesMontagne}):</b> Collects the full response
+ *       with {@link com.jmontagne.bedrock.model.PerformanceMetrics} (TTFT, latency, token counts).</li>
+ * </ul>
+ *
+ * <h3>Model Comparison</h3>
+ * <p>{@link #compareModels} runs Claude 3.5 Sonnet and Claude 3 Haiku in parallel
+ * ({@code Mono.zip}) and returns side-by-side results with latency metrics —
+ * demonstrating the cost vs. quality trade-off (Sonnet: $3/$15 vs. Haiku: $0.25/$1.25
+ * per M tokens).</p>
+ *
+ * @see BedrockStreamingClient Low-level streaming bridge (Converse Stream API + Reactor Sinks)
+ * @see com.jmontagne.bedrock.model.PerformanceMetrics TTFT, token usage, and latency metrics
+ */
 @Service
 public class InferenceService {
 

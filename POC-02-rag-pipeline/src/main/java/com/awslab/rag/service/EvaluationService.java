@@ -17,6 +17,29 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * LLM-as-Judge evaluation framework for RAG quality assessment.
+ *
+ * <p>Scores RAG pipeline output on two axes using Claude 3 Haiku as the judge model:</p>
+ * <ul>
+ *   <li><b>Relevance (0.0–1.0):</b> Are the retrieved chunks relevant to the query?
+ *       Measures retrieval quality independently of generation.</li>
+ *   <li><b>Groundedness (0.0–1.0):</b> Is the generated answer supported by the retrieved
+ *       chunks? Detects hallucination — claims not backed by source documents.</li>
+ * </ul>
+ *
+ * <h3>Architecture</h3>
+ * <p>Both scores are computed in parallel via {@code CompletableFuture.thenCombine},
+ * each making an independent Bedrock InvokeModel call. The evaluation prompt constrains
+ * the judge to return a single numeric score (0–10), normalized to 0.0–1.0.</p>
+ *
+ * <h3>Cost</h3>
+ * <p>Each evaluation invokes Claude 3 Haiku twice (~200 tokens/call) — negligible cost
+ * at $0.00025/1K input tokens.</p>
+ *
+ * @see RetrievalService Provides the chunks scored for relevance
+ * @see RagService Provides the generated answer scored for groundedness
+ */
 @Service
 public class EvaluationService {
 
