@@ -24,7 +24,7 @@ This repository is NOT a monolithic application. It is a **Laboratory** designed
 | :--- | :--- | :--- | :--- | :--- |
 | **POC-01** | *Fundamentals* | **Bedrock Inference & Observability**: Lambda deployment, streaming, Powertools logging. | Java 21 / Lambda / Terraform | ✅ Complete |
 | **POC-02** | *Architecture* | **The RAG Pipeline**: Retrieve & Generate with S3 Vectors, semantic search, metadata filtering, LLM-as-Judge evaluation. Pure Terraform IaC. | Java / AWS SDK v2 / Terraform | ✅ Complete |
-| **POC-03** | *Agents* | **Tool Use & Bedrock Agents**: Programmatic tool use (Converse API) vs. managed agents (Action Groups). | Java / AWS SDK v2 | 🔧 In Progress |
+| **POC-03** | *Agents* | **Tool Use & Bedrock Agents**: Programmatic tool use (Converse API) vs. managed agents (Action Groups). | Java / AWS SDK v2 | ✅ Complete |
 | **POC-04** | *Security* | **Security Guardrails**: PII filtering & GDPR compliance patterns. | Python / Boto3 | ⏳ Planned |
 | **POC-05** | *Evaluation* | **Automated Eval**: Ragas-based scoring and "LLM-as-a-Judge" metrics. | Python / Ragas | ⏳ Planned |
 | **POC-06** | *Multi-modal* | **Vision Claim Agent**: Processing visual data (e.g., accident photos) via Claude 3.5. | Java / Vision | ⏳ Planned |
