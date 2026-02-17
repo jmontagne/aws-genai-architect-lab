@@ -1,7 +1,7 @@
 resource "aws_bedrockagent_agent" "flight_assistant" {
   agent_name                  = "${var.project_name}-flight-assistant"
   agent_resource_role_arn     = aws_iam_role.agent_role.arn
-  foundation_model            = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  foundation_model            = "anthropic.claude-3-5-haiku-20241022-v1:0"
   idle_session_ttl_in_seconds = 600
 
   instruction = <<-EOT

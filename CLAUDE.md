@@ -62,7 +62,7 @@ POC-XX-name/
 |-----|-------|-------|--------|
 | POC-01 | Bedrock Inference & Observability | Java / AWS SDK v2 | Complete |
 | POC-02 | RAG Pipeline & Knowledge Bases | Java / AWS SDK v2 | Active |
-| POC-03 | Tool Use & Bedrock Agents | Java / AWS SDK v2 | In Progress |
+| POC-03 | Tool Use & Bedrock Agents | Java / AWS SDK v2 | Complete |
 | POC-04 | Security Guardrails (PII/GDPR) | Python/Boto3 | Planned |
 | POC-05 | Automated Evaluation (Ragas) | Python/Ragas | Planned |
 | POC-06 | Multi-modal Vision | Java/Vision | Planned |

@@ -37,7 +37,7 @@ resource "aws_iam_role_policy" "agent_bedrock" {
         "bedrock:InvokeModel"
       ]
       Resource = [
-        "arn:aws:bedrock:${var.region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+        "arn:aws:bedrock:${var.region}::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0"
       ]
     }]
   })

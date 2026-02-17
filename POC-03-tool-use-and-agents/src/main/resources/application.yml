@@ -8,7 +8,7 @@ server:
 aws:
   region: us-east-1
   bedrock:
-    model-id: ${BEDROCK_MODEL_ID:anthropic.claude-3-5-sonnet-20241022-v2:0}
+    model-id: ${BEDROCK_MODEL_ID:anthropic.claude-3-5-haiku-20241022-v1:0}
     agent-id: ${BEDROCK_AGENT_ID:your-agent-id}
     agent-alias-id: ${BEDROCK_AGENT_ALIAS_ID:your-agent-alias-id}
   dynamodb:

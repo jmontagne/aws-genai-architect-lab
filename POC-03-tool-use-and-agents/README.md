@@ -40,36 +40,17 @@ The key insight: **the model does not execute the tool — it decides WHICH tool
 
 ReAct is the prompting strategy that makes tool use work. The model follows a loop:
 
-```
-┌──────────────────────────────────────────────────────┐
-│                    ReAct Loop                         │
-│                                                       │
-│  1. THOUGHT   "I need to find flights from WAW       │
-│                to CDG on March 15."                   │
-│       │                                               │
-│       ▼                                               │
-│  2. ACTION    Call searchFlights(WAW, CDG, 2025-03-15)│
-│       │                                               │
-│       ▼                                               │
-│  3. OBSERVATION  [{flightId: LO335, price: 450},      │
-│                   {flightId: AF1145, price: 380}]     │
-│       │                                               │
-│       ▼                                               │
-│  4. THOUGHT   "The user might want details on the     │
-│                cheapest flight. Let me get AF1145."    │
-│       │                                               │
-│       ▼                                               │
-│  5. ACTION    Call getFlightDetails(AF1145)            │
-│       │                                               │
-│       ▼                                               │
-│  6. OBSERVATION  {departure: 08:30, arrival: 10:45,   │
-│                   airline: "Air France"}               │
-│       │                                               │
-│       ▼                                               │
-│  7. ANSWER    "There are 2 flights. The cheapest is    │
-│                AF1145 by Air France at €380,           │
-│                departing 08:30, arriving 10:45."       │
-└──────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    T1["🧠 THOUGHT: I need to find flights\nfrom WAW to CDG on March 15"]
+    A1["⚡ ACTION: searchFlights\n(WAW, CDG, 2025-03-15)"]
+    O1["📋 OBSERVATION:\nLO335 €450, AF1145 €380"]
+    T2["🧠 THOUGHT: User wants the cheapest.\nLet me get details on AF1145"]
+    A2["⚡ ACTION: getFlightDetails\n(AF1145)"]
+    O2["📋 OBSERVATION:\ndeparture 08:30, arrival 10:45,\nAir France"]
+    ANS["✅ ANSWER: The cheapest is AF1145\nby Air France at €380,\ndeparting 08:30, arriving 10:45"]
+
+    T1 --> A1 --> O1 --> T2 --> A2 --> O2 --> ANS
 ```
 
 The model iterates through Thought → Action → Observation until it has enough information to produce a final answer. This is not a single LLM call — it is a **multi-turn loop** where each iteration may invoke a different tool.
@@ -111,69 +92,36 @@ In Pattern A (Converse API), Return of Control is inherent — you always receiv
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│                          POC-03: Tool Use & Bedrock Agents                        │
-│                                                                                   │
-│   ┌────────────────────────────────────────────────────────────────────────────┐  │
-│   │              Java Application (Spring Boot 3.4)                            │  │
-│   │                                                                            │  │
-│   │  ┌─────────────────────────────────────────────────────────────────────┐   │  │
-│   │  │                        REST API (/api/v1/agent)                     │   │  │
-│   │  │  POST /tool-use      POST /invoke-agent      GET /compare          │   │  │
-│   │  └────────────┬────────────────────┬──────────────────────┬───────────┘   │  │
-│   │               │                    │                      │               │  │
-│   │               ▼                    ▼                      ▼               │  │
-│   │  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────────────┐   │  │
-│   │  │ ToolUseService   │  │ AgentService     │  │ ComparisonService    │   │  │
-│   │  │                  │  │                  │  │                       │   │  │
-│   │  │ ReAct loop in    │  │ Delegates to     │  │ Runs both patterns   │   │  │
-│   │  │ Java code        │  │ Bedrock Agent    │  │ and compares results │   │  │
-│   │  │                  │  │                  │  │                       │   │  │
-│   │  │ 1. Send message  │  │ 1. InvokeAgent() │  │ Latency, trace,     │   │  │
-│   │  │ 2. Check stop    │  │ 2. Agent reasons │  │ control metrics      │   │  │
-│   │  │    reason        │  │ 3. Agent calls   │  │                       │   │  │
-│   │  │ 3. If tool_use:  │  │    Lambda tool   │  └───────────────────────┘   │  │
-│   │  │    execute tool  │  │ 4. Return answer │                              │  │
-│   │  │ 4. Send result   │  │                  │                              │  │
-│   │  │ 5. Repeat until  │  └──────┬───────────┘                              │  │
-│   │  │    end_turn      │         │                                          │  │
-│   │  └──────┬───────────┘         │                                          │  │
-│   │         │                     │                                          │  │
-│   │         │  ┌──────────────────┘                                          │  │
-│   │         │  │                                                             │  │
-│   │         ▼  │    ┌──────────────────────────────────────────────────┐     │  │
-│   │  ┌──────────┐   │              FlightTool                          │     │  │
-│   │  │ Tool     │   │                                                  │     │  │
-│   │  │ Registry │──▶│  searchFlights(origin, destination, date)        │     │  │
-│   │  │          │   │  getFlightDetails(flightId)                      │     │  │
-│   │  └──────────┘   │                                                  │     │  │
-│   │                  │  Reads from DynamoDB (shared by both patterns)   │     │  │
-│   │                  └──────────────────────────┬─────────────────────┘     │  │
-│   └─────────────────────────────────────────────┼──────────────────────────┘  │
-│                                                  │                             │
-│   ┌──────────────────────────────────────────────┼──────────────────────────┐  │
-│   │                          AWS Services         │                          │  │
-│   │                                               │                          │  │
-│   │  ┌──────────────────┐  ┌─────────────────┐   │  ┌───────────────────┐   │  │
-│   │  │ Amazon Bedrock   │  │ Bedrock Agent   │   │  │    DynamoDB       │   │  │
-│   │  │ Converse API     │  │                 │   │  │                   │   │  │
-│   │  │                  │  │ Action Group:   │   │  │  Table: flights   │   │  │
-│   │  │ Used by          │  │  OpenAPI schema │   └─▶│  PK: route        │   │  │
-│   │  │ Pattern A        │  │  → Lambda tool  │      │  SK: flightId     │   │  │
-│   │  │ (ToolUseService) │  │                 │      │                   │   │  │
-│   │  │                  │  │ Used by         │      │  GSI: date-index  │   │  │
-│   │  │                  │  │ Pattern B       │      │                   │   │  │
-│   │  └──────────────────┘  │ (AgentService)  │      └───────────────────┘   │  │
-│   │                        └────────┬────────┘                               │  │
-│   │                                 │                                        │  │
-│   │                        ┌────────▼────────┐                               │  │
-│   │                        │  Lambda Function │                               │  │
-│   │                        │  (Tool Handler)  │                               │  │
-│   │                        │  Reads DynamoDB  │                               │  │
-│   │                        └─────────────────┘                               │  │
-│   └──────────────────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph APP["Java Application (Spring Boot 3.4)"]
+        API["REST API /api/v1/agent\nPOST /tool-use | POST /invoke-agent | POST /compare"]
+        TUS["ToolUseService\n(Pattern A)\nReAct loop in Java"]
+        AS["AgentService\n(Pattern B)\nDelegates to\nBedrock Agent"]
+        CS["ComparisonService\nRuns both patterns\ncompares results"]
+        FT["FlightTool\nsearchFlights(origin, dest, date)\ngetFlightDetails(flightId)"]
+
+        API --> TUS
+        API --> AS
+        API --> CS
+        TUS --> FT
+        CS --> TUS
+        CS --> AS
+    end
+
+    subgraph AWS["AWS Services"]
+        CONVERSE["Amazon Bedrock\nConverse API"]
+        AGENT["Bedrock Agent\nAction Group:\nOpenAPI schema"]
+        LAMBDA["Lambda Function\n(Tool Handler)"]
+        DYNAMO["DynamoDB\nTable: flights\nPK: route | SK: flightId\nGSI: date-index"]
+
+        AGENT --> LAMBDA
+        LAMBDA --> DYNAMO
+    end
+
+    TUS <--> CONVERSE
+    AS <--> AGENT
+    FT --> DYNAMO
 ```
 
 ### Why Two Patterns Share the Same Data?
@@ -188,7 +136,7 @@ Both patterns query the same DynamoDB table. This lets you compare them fairly �
 |-------|------------|---------|-----------------|
 | Infrastructure | Terraform | >= 1.5 | Reproducible, auditable AWS resource management |
 | Database | Amazon DynamoDB | - | Serverless, pay-per-request, natural fit for Lambda tools |
-| LLM | Claude 3.5 Sonnet | v2 | Strong tool-use capabilities and reasoning |
+| LLM | Claude 3.5 Haiku | v1 | Cost-optimized for POC — strong tool-use support at ~4x lower cost than Sonnet |
 | Agents | Bedrock Agents | - | Managed ReAct orchestration with Action Groups |
 | Application | Java 21 | 21 | Modern Java with records and pattern matching |
 | Framework | Spring Boot | 3.4 | Production-ready REST API, consistent with POC-01/02 |
@@ -972,10 +920,12 @@ Pattern B is slower because of the agent orchestration overhead, but requires le
 | DynamoDB (on-demand) | $1.25/M write, $0.25/M read | ~$0.01/month |
 | Lambda (tool handler) | $0.20/M requests + compute | ~$0.05/month |
 | Bedrock Agent | No additional charge (you pay for LLM calls) | $0 |
-| Claude 3.5 Sonnet v2 | $3/M input tokens, $15/M output tokens | ~$3/month |
-| **Total POC Cost** | | **< $4/month** |
+| Claude 3.5 Haiku | $0.80/M input tokens, $4/M output tokens | ~$0.80/month |
+| **Total POC Cost** | | **< $1/month** |
 
 > **Key Learning:** Bedrock Agents have no separate fee — you only pay for the underlying model invocations. However, agent orchestration typically requires 2-5x more tokens than a single Converse call because of the ReAct loop (each iteration sends the full conversation history plus tool results).
+
+> **Cost Optimization:** This POC uses **Claude 3.5 Haiku** ($0.80/$4.00 per M tokens) instead of Claude 3.5 Sonnet v2 ($3/$15 per M tokens) — a **~4x cost reduction** while retaining full tool-use support. For production workloads requiring stronger reasoning, switch to Sonnet via the `BEDROCK_MODEL_ID` environment variable.
 
 ### Token Overhead: Pattern A vs. Pattern B
 
@@ -1001,11 +951,11 @@ Pattern B uses **~2.3x more input tokens** because the Bedrock Agent injects hid
 
 **At enterprise scale (1M queries/month):**
 
-| Pattern | Input tokens | Output tokens | Monthly cost (Claude 3.5 Sonnet) |
+| Pattern | Input tokens | Output tokens | Monthly cost (Claude 3.5 Haiku) |
 |---------|-------------|---------------|----------------------------------|
-| A: Programmatic | ~1.9B | ~400M | $5,700 + $6,000 = **$11,700** |
-| B: Managed Agent | ~4.4B | ~500M | $13,200 + $7,500 = **$20,700** |
-| **Difference** | | | **+$9,000/month (+77%)** |
+| A: Programmatic | ~1.9B | ~400M | $1,520 + $1,600 = **$3,120** |
+| B: Managed Agent | ~4.4B | ~500M | $3,520 + $2,000 = **$5,520** |
+| **Difference** | | | **+$2,400/month (+77%)** |
 
 This is a real architectural decision for enterprise deployments. Pattern A's token efficiency can save significant costs at scale, but Pattern B saves developer time.
 
