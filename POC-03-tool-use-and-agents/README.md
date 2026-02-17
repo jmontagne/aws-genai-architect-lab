@@ -42,13 +42,13 @@ ReAct is the prompting strategy that makes tool use work. The model follows a lo
 
 ```mermaid
 flowchart TD
-    T1["🧠 THOUGHT: I need to find flights\nfrom WAW to CDG on March 15"]
-    A1["⚡ ACTION: searchFlights\n(WAW, CDG, 2025-03-15)"]
-    O1["📋 OBSERVATION:\nLO335 €450, AF1145 €380"]
-    T2["🧠 THOUGHT: User wants the cheapest.\nLet me get details on AF1145"]
-    A2["⚡ ACTION: getFlightDetails\n(AF1145)"]
-    O2["📋 OBSERVATION:\ndeparture 08:30, arrival 10:45,\nAir France"]
-    ANS["✅ ANSWER: The cheapest is AF1145\nby Air France at €380,\ndeparting 08:30, arriving 10:45"]
+    T1["🧠 THOUGHT: I need to find flights<br/>from WAW to CDG on March 15"]
+    A1["⚡ ACTION: searchFlights<br/>(WAW, CDG, 2025-03-15)"]
+    O1["📋 OBSERVATION:<br/>LO335 €450, AF1145 €380"]
+    T2["🧠 THOUGHT: User wants the cheapest.<br/>Let me get details on AF1145"]
+    A2["⚡ ACTION: getFlightDetails<br/>(AF1145)"]
+    O2["📋 OBSERVATION:<br/>departure 08:30, arrival 10:45,<br/>Air France"]
+    ANS["✅ ANSWER: The cheapest is AF1145<br/>by Air France at €380,<br/>departing 08:30, arriving 10:45"]
 
     T1 --> A1 --> O1 --> T2 --> A2 --> O2 --> ANS
 ```
@@ -95,11 +95,11 @@ In Pattern A (Converse API), Return of Control is inherent — you always receiv
 ```mermaid
 flowchart TB
     subgraph APP["Java Application (Spring Boot 3.4)"]
-        API["REST API /api/v1/agent\nPOST /tool-use | POST /invoke-agent | POST /compare"]
-        TUS["ToolUseService\n(Pattern A)\nReAct loop in Java"]
-        AS["AgentService\n(Pattern B)\nDelegates to\nBedrock Agent"]
-        CS["ComparisonService\nRuns both patterns\ncompares results"]
-        FT["FlightTool\nsearchFlights(origin, dest, date)\ngetFlightDetails(flightId)"]
+        API["REST API /api/v1/agent<br/>POST /tool-use | POST /invoke-agent | POST /compare"]
+        TUS["ToolUseService<br/>(Pattern A)<br/>ReAct loop in Java"]
+        AS["AgentService<br/>(Pattern B)<br/>Delegates to<br/>Bedrock Agent"]
+        CS["ComparisonService<br/>Runs both patterns<br/>compares results"]
+        FT["FlightTool<br/>searchFlights(origin, dest, date)<br/>getFlightDetails(flightId)"]
 
         API --> TUS
         API --> AS
@@ -110,10 +110,10 @@ flowchart TB
     end
 
     subgraph AWS["AWS Services"]
-        CONVERSE["Amazon Bedrock\nConverse API"]
-        AGENT["Bedrock Agent\nAction Group:\nOpenAPI schema"]
-        LAMBDA["Lambda Function\n(Tool Handler)"]
-        DYNAMO["DynamoDB\nTable: flights\nPK: route | SK: flightId\nGSI: date-index"]
+        CONVERSE["Amazon Bedrock<br/>Converse API"]
+        AGENT["Bedrock Agent<br/>Action Group:<br/>OpenAPI schema"]
+        LAMBDA["Lambda Function<br/>(Tool Handler)"]
+        DYNAMO["DynamoDB<br/>Table: flights<br/>PK: route | SK: flightId<br/>GSI: date-index"]
 
         AGENT --> LAMBDA
         LAMBDA --> DYNAMO
