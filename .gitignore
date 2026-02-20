@@ -68,6 +68,7 @@ terraform.rc
 # ===================
 .claude/
 **/.claude/
+CLAUDE.md
 
 # ===================
 # OS Files
