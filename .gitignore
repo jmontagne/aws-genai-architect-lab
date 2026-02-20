@@ -30,6 +30,7 @@ dependency-reduced-pom.xml
 # Terraform
 # ===================
 .terraform/
+.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 *.tfvars
