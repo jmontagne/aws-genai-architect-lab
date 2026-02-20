@@ -1,0 +1,106 @@
+[
+  {
+    "id": "sum-01",
+    "task_type": "summarization",
+    "prompt": "Summarize the following text: Amazon Bedrock is a fully managed service that makes foundation models from leading AI companies available through a unified API. It offers model choice, fine-tuning capabilities, and enterprise-grade security features including guardrails for responsible AI.",
+    "reference_answer": "Amazon Bedrock is a managed AWS service providing access to multiple foundation models via a single API, with fine-tuning and security features.",
+    "generated_answer": "Amazon Bedrock is a fully managed AWS service that provides access to foundation models from various AI companies through a unified API. It includes fine-tuning and guardrails.",
+    "context": "Amazon Bedrock is a fully managed service that makes foundation models from leading AI companies available through a unified API. It offers model choice, fine-tuning capabilities, and enterprise-grade security features including guardrails for responsible AI."
+  },
+  {
+    "id": "sum-02",
+    "task_type": "summarization",
+    "prompt": "Summarize the following text: RAG (Retrieval-Augmented Generation) combines information retrieval with text generation. The retriever fetches relevant documents from a knowledge base, and the generator produces answers grounded in those documents, reducing hallucinations.",
+    "reference_answer": "RAG combines retrieval and generation: a retriever finds relevant documents, and a generator creates answers based on them, reducing hallucinations.",
+    "generated_answer": "RAG is a technique that uses a retriever to fetch documents and a generator to produce grounded answers, minimizing hallucinations.",
+    "context": "RAG (Retrieval-Augmented Generation) combines information retrieval with text generation. The retriever fetches relevant documents from a knowledge base, and the generator produces answers grounded in those documents, reducing hallucinations."
+  },
+  {
+    "id": "sum-03",
+    "task_type": "summarization",
+    "prompt": "Summarize: AWS Lambda is a serverless compute service that runs code in response to events. It automatically manages compute resources, scales from zero to thousands of concurrent executions, and charges only for compute time consumed.",
+    "reference_answer": "AWS Lambda is a serverless service that runs event-driven code with automatic scaling and pay-per-use pricing.",
+    "generated_answer": "Lambda is a serverless service by AWS. It executes code when triggered by events, scales automatically, and bills based on actual compute time used.",
+    "context": "AWS Lambda is a serverless compute service that runs code in response to events. It automatically manages compute resources, scales from zero to thousands of concurrent executions, and charges only for compute time consumed."
+  },
+  {
+    "id": "sum-04",
+    "task_type": "summarization",
+    "prompt": "Summarize: Terraform is an infrastructure as code tool that lets you define cloud resources in declarative configuration files. It supports multiple providers, tracks state, and enables reproducible infrastructure deployments.",
+    "reference_answer": "Terraform is an IaC tool for defining cloud resources declaratively, supporting multiple providers with state tracking for reproducible deployments.",
+    "generated_answer": "Terraform is a tool for managing cloud infrastructure using code. It works with many cloud providers and keeps track of resource state.",
+    "context": "Terraform is an infrastructure as code tool that lets you define cloud resources in declarative configuration files. It supports multiple providers, tracks state, and enables reproducible infrastructure deployments."
+  },
+  {
+    "id": "qa-01",
+    "task_type": "question_answering",
+    "prompt": "What is the main purpose of Amazon Bedrock Guardrails?",
+    "reference_answer": "Amazon Bedrock Guardrails provide configurable safety filters that inspect both inputs and outputs to enforce content policies, including PII detection, content filtering, denied topics, and contextual grounding.",
+    "generated_answer": "Bedrock Guardrails are safety filters that check user prompts and model responses against content policies. They can detect PII, block harmful content, enforce denied topics, and verify factual grounding.",
+    "context": "Amazon Bedrock Guardrails are configurable safety filters that sit between your application and the LLM. They inspect both inputs (user prompts) and outputs (model responses) to enforce content policies including PII detection, content filtering, denied topics, word filtering, contextual grounding, and regex patterns."
+  },
+  {
+    "id": "qa-02",
+    "task_type": "question_answering",
+    "prompt": "What is the difference between ROUGE and BLEU metrics?",
+    "reference_answer": "ROUGE is recall-oriented and measures how much of the reference text is captured in the generated text, commonly used for summarization. BLEU is precision-oriented and measures how much of the generated text appears in the reference, commonly used for translation.",
+    "generated_answer": "ROUGE focuses on recall and is used for summarization evaluation. BLEU focuses on precision and is primarily used for machine translation evaluation.",
+    "context": "ROUGE (Recall-Oriented Understudy for Gisting Evaluation) measures recall between generated and reference text. BLEU (Bilingual Evaluation Understudy) measures precision of n-gram overlap between generated and reference text."
+  },
+  {
+    "id": "qa-03",
+    "task_type": "question_answering",
+    "prompt": "How does BERTScore differ from BLEU?",
+    "reference_answer": "BERTScore uses contextual embeddings to compute cosine similarity between tokens, capturing semantic meaning. BLEU only measures exact n-gram overlap, missing paraphrases and synonyms.",
+    "generated_answer": "BERTScore uses BERT embeddings to compute semantic similarity between texts, making it robust to paraphrasing. BLEU relies on exact word matches and n-gram overlap, so it misses semantically equivalent but differently worded text.",
+    "context": "BERTScore leverages pre-trained BERT contextual embeddings and computes cosine similarity between token representations. Unlike BLEU which counts exact n-gram matches, BERTScore captures semantic equivalence and is robust to paraphrasing."
+  },
+  {
+    "id": "qa-04",
+    "task_type": "question_answering",
+    "prompt": "What are the three evaluation modes in Amazon Bedrock?",
+    "reference_answer": "Amazon Bedrock supports three evaluation modes: automatic (programmatic metrics like BERTScore and F1), human-based (manual review by workers at $0.21 per task), and LLM-as-a-judge (using another LLM to evaluate outputs).",
+    "generated_answer": "Bedrock offers automatic evaluation using programmatic metrics, human evaluation where reviewers rate outputs, and LLM-as-a-judge where another model evaluates the responses.",
+    "context": "Amazon Bedrock Model Evaluation supports three modes: (1) Automatic evaluation using programmatic metrics such as BERTScore, F1, and exact match, (2) Human-based evaluation where workers rate prompt-response pairs at $0.21 per task, and (3) LLM-as-a-judge evaluation where a separate foundation model evaluates the quality of outputs."
+  },
+  {
+    "id": "qa-05",
+    "task_type": "question_answering",
+    "prompt": "What is perplexity in the context of language models?",
+    "reference_answer": "Perplexity measures how well a language model predicts the next token. Lower perplexity means the model is more confident and accurate in its predictions. It is calculated as the exponentiated average negative log-likelihood of a sequence.",
+    "generated_answer": "Perplexity indicates how surprised a language model is by new text. A lower score means better predictions. It is the exponential of the cross-entropy loss.",
+    "context": "Perplexity is a metric that measures how well a probability model predicts a sample. For language models, lower perplexity indicates better next-token prediction. It is computed as the exponentiated average negative log-likelihood per token."
+  },
+  {
+    "id": "hal-01",
+    "task_type": "hallucination_detection",
+    "prompt": "Based on the context, what services does AWS offer for AI?",
+    "reference_answer": "Based on the context, AWS offers Amazon Bedrock for foundation models, SageMaker for ML training, and Rekognition for image analysis.",
+    "generated_answer": "AWS offers Amazon Bedrock for foundation models, SageMaker for ML, Rekognition for images, and AWS Quantum Computing for AI acceleration.",
+    "context": "AWS provides several AI services: Amazon Bedrock for accessing foundation models, Amazon SageMaker for building and training ML models, and Amazon Rekognition for image and video analysis."
+  },
+  {
+    "id": "hal-02",
+    "task_type": "hallucination_detection",
+    "prompt": "What programming languages does AWS Lambda support?",
+    "reference_answer": "AWS Lambda supports Python, Node.js, Java, Go, .NET, and Ruby, plus custom runtimes via Lambda Layers.",
+    "generated_answer": "AWS Lambda supports Python, Node.js, Java, Go, .NET, Ruby, Rust, and PHP natively. It also supports custom runtimes.",
+    "context": "AWS Lambda natively supports Python, Node.js, Java, Go, .NET, and Ruby. For other languages, you can use custom runtimes via Lambda Layers."
+  },
+  {
+    "id": "trans-01",
+    "task_type": "translation",
+    "prompt": "Translate to French: The evaluation of foundation models requires both automated metrics and human judgment to ensure quality.",
+    "reference_answer": "L'evaluation des modeles de fondation necessite a la fois des metriques automatisees et un jugement humain pour garantir la qualite.",
+    "generated_answer": "L'evaluation des modeles fondamentaux necessite des metriques automatisees et un jugement humain pour assurer la qualite.",
+    "context": ""
+  },
+  {
+    "id": "trans-02",
+    "task_type": "translation",
+    "prompt": "Translate to German: Machine learning models should be evaluated for fairness, accuracy, and robustness before deployment.",
+    "reference_answer": "Modelle des maschinellen Lernens sollten vor der Bereitstellung auf Fairness, Genauigkeit und Robustheit bewertet werden.",
+    "generated_answer": "Machine-Learning-Modelle sollten vor dem Einsatz auf Fairness, Genauigkeit und Robustheit getestet werden.",
+    "context": ""
+  }
+]
